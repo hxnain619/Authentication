@@ -205,6 +205,7 @@ app.post('/forgot', function (req, res, next) {
         secure: false,
         requireTLS: true,
         auth: {
+          // Add Your Credentials
             user: 'Your Email',
             pass: 'Your Pass'
         },
@@ -275,6 +276,7 @@ app.post('/reset/:token', function (req, res) {
         secure: false,
         requireTLS: true,
         auth: {
+          // Add Your Credentials
             user: 'Your EMail',
             pass: 'Your Pass'
         },
