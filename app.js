@@ -215,6 +215,7 @@ app.post('/forgot', function (req, res, next) {
     });
       var mailOptions = {
         to: user.email,
+        //  Change from mail to yours 
         from: 'hxan619@gmail.com',
         subject: 'Node.js Password Reset',
         text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
@@ -286,6 +287,7 @@ app.post('/reset/:token', function (req, res) {
       });
       var mailOptions = {
         to: user.email,
+        //  Change from mail to yours 
         from: 'hxan619@gmail.com',
         subject: 'Your password has been changed',
         text: 'Hello,\n\n' +
