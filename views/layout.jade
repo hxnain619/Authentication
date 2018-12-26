@@ -14,10 +14,11 @@ html
             span.icon-bar
             span.icon-bar
             span.icon-bar
-          a.navbar-brand(href='/') Project name
+          a.navbar-brand(href='/') UpUpManga
         .collapse.navbar-collapse
           ul.nav.navbar-nav
-            li.active
+            if user
+             li.active
               a(href='/') Home
             if user
               li
