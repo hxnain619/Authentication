@@ -181,8 +181,8 @@ app.post('/forgot', function (req, res, next) {
         requireTLS: true,
         auth: {
           // Add Your Credentials
-            user: 'hxan619@gmail.com',
-            pass: 'Reymysterio^!(0'
+            user: 'email',
+            pass: 'password'
         },
         tls: {
               rejectUnauthorized: false
@@ -252,8 +252,8 @@ app.post('/reset/:token', function (req, res) {
         requireTLS: true,
         auth: {
           // Add Your Credentials
-            user: 'hxan619@gmail.com',
-            pass: 'Reymysterio^!(0'
+            user: 'email',
+            pass: 'password'
         },
         tls: {
               rejectUnauthorized: false
