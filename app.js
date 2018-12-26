@@ -14,7 +14,7 @@ var async = require('async');
 var crypto = require('crypto');
 var User = require('./routes/userModel');
 
-    // Passport Local Strategy
+// Passport Local Strategy
 
 passport.use(new LocalStrategy(function (username, password, done) {
   User.findOne({ username: username }, function (err, user) {
@@ -40,13 +40,15 @@ passport.deserializeUser(function (id, done) {
   });
 });
 
-    // Connecting To Mongo (mLab)
+// Connecting To Mongo (mLab)
 
-mongoose.connect('mongodb://hxnain619:hxn6190@ds125502.mlab.com:25502/server-mongodb', { useNewUrlParser: true }, (err, data) => {
+// add Your mongodb Link 
+
+mongoose.connect('YOUR MONGODB LINK', { useNewUrlParser: true }, (err, data) => {
   if (err) {
     console.log(err.message);
-  } else{
-  console.log("Connected To Mongo!!");
+  } else {
+    console.log("Connected To Mongo!!");
   }
 });
 
@@ -69,7 +71,7 @@ app.use(flash());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ************ Routes  *****************
-          // Home Page
+// Home Page
 
 app.get('/', function (req, res) {
   res.render('index', {
@@ -78,7 +80,7 @@ app.get('/', function (req, res) {
   });
 });
 
-      // Login Page Render
+// Login Page Render
 
 app.get('/login', function (req, res) {
   res.render('login', {
@@ -87,27 +89,27 @@ app.get('/login', function (req, res) {
   });
 });
 
-    // Login or Sign In
+// Login or Sign In
 
 app.post('/login', function (req, res, next) {
   passport.authenticate('local', function (err, user, info) {
     if (err) return next(err)
     if (!user) {
-      req.flash('error',`User Not Found With Name , ${req.body.username}`);
+      req.flash('error', `User Not Found With Name , ${req.body.username}`);
       return res.redirect('/login')
     }
     req.logIn(user, function (err) {
       if (err) {
         req.flash('error', "Can't Log In")
         return next(err);
-       }
+      }
       req.flash('success', "You are Logged In !!");
       return res.redirect('/');
     });
   })(req, res, next);
 });
 
-    // SignUp Page Render
+// SignUp Page Render
 
 app.get('/signup', function (req, res) {
   res.render('signup', {
@@ -116,32 +118,37 @@ app.get('/signup', function (req, res) {
   });
 });
 
-    // SignUp , Create Account
+// SignUp , Create Account
 
 app.post('/signup', function (req, res) {
-  var user = new User({
-    username: req.body.username,
-    email: req.body.email,
-    password: req.body.password
-  });
+  User.findOne({ email: req.body.email }, function (err, user) {
 
-  user.save(function (err) {
-    req.logIn(user, function (err) {
-      req.flash('success', `Hi!!,  ${(user.username).toUpperCase()} you have successfully created your UpUpManga Account`);
-      res.redirect('/');
+    if (user) {
+      req.flash('error', 'user with this email address already exists.');
+    }
+    var user = new User({
+      username: req.body.username,
+      email: req.body.email,
+      password: req.body.password
+    });
+
+    user.save(function (err) {
+      req.logIn(user, function (err) {
+        req.flash('success', `Hi!!,  ${(user.username)} you have successfully created your UpUpManga Account`);
+        res.redirect('/');
+      });
     });
   });
 });
-
-  // LogOut 
+// LogOut 
 
 app.get('/logout', function (req, res) {
   req.logout();
-  req.flash('info','You are logged out Successfully!!');
+  req.flash('info', 'You are logged out Successfully!!');
   res.redirect('/');
 });
 
-    // Forgot Pass 
+// Forgot Pass 
 
 app.get('/forgot', function (req, res) {
   res.render('forgot', {
@@ -174,32 +181,39 @@ app.post('/forgot', function (req, res, next) {
       });
     },
     function (token, user, done) {
-      let transport = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        requireTLS: true,
-        auth: {
-          // Add Your Credentials
-            user: 'email',
-            pass: 'password'
-        },
-        tls: {
-              rejectUnauthorized: false
+
+      User.findOne({ email: user }, function (err, user) {
+
+        if (!user) {
+          req.flash('error', 'No account with that email address exists.');
+        }
+        let transport = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          requireTLS: true,
+          auth: {
+            // Add Your Credentials
+            user: 'Email Of Yours',
+            pass: 'Password Of Yours'
+          },
+          tls: {
+            rejectUnauthorized: false
           }
-    });
-      var mailOptions = {
-        to: user.email,
-        subject: 'UpUpManga Password Reset',
-        text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
-          'Please click on the following link to complete the process:\n\n' +
-          'http://' + req.headers.host + '/reset/' + token + '\n\n' +
-          'If you did not request this, please ignore this email and your password will remain unchanged.\n'
-      };
-      transport.sendMail(mailOptions, function (err) {
-        req.flash('info', 'An e-mail has been sent to ' + user.email + ' with further instructions.');
-        done(err, 'done');
-      });
+        });
+        var mailOptions = {
+          to: user.email,
+          subject: 'UpUpManga Password Reset',
+          text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
+            'Please click on the following link to complete the process:\n\n' +
+            'http://' + req.headers.host + '/reset/' + token + '\n\n' +
+            'If you did not request this, please ignore this email and your password will remain unchanged.\n'
+        };
+        transport.sendMail(mailOptions, function (err) {
+          req.flash('info', 'An e-mail has been sent to ' + user.email + ' with further instructions.');
+          done(err, 'done');
+        });
+      })
     }
   ], function (err) {
     if (err) return next(err);
@@ -207,7 +221,7 @@ app.post('/forgot', function (req, res, next) {
   });
 });
 
-      //   to Send Reset Link
+//   to Send Reset Link
 
 app.get('/reset/:token', function (req, res) {
   User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, function (err, user) {
@@ -222,7 +236,7 @@ app.get('/reset/:token', function (req, res) {
   });
 });
 
-      // To Reset / Update PAssword
+// To Reset / Update PAssword
 
 app.post('/reset/:token', function (req, res) {
   async.waterfall([
@@ -252,12 +266,12 @@ app.post('/reset/:token', function (req, res) {
         requireTLS: true,
         auth: {
           // Add Your Credentials
-            user: 'email',
-            pass: 'password'
+          user: 'Email Of Yours',
+          pass: 'Password Of Yours'
         },
         tls: {
-              rejectUnauthorized: false
-          }
+          rejectUnauthorized: false
+        }
       });
       var mailOptions = {
         to: user.email,
