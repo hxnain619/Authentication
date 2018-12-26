@@ -4,15 +4,15 @@ var favicon = require('static-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var session = require('express-session')
+var session = require('express-session');
 var mongoose = require('mongoose');
-var nodemailer = require('nodemailer');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
-var bcrypt = require('bcrypt-nodejs');
+var flash = require('express-flash');
+var nodemailer = require('nodemailer');
 var async = require('async');
 var crypto = require('crypto');
-var flash = require('express-flash');
+var User = require('./routes/userModel');
 
     // Passport Local Strategy
 
@@ -40,48 +40,14 @@ passport.deserializeUser(function (id, done) {
   });
 });
 
-    // Schema of Authentication
-
-var userSchema = new mongoose.Schema({
-  username: { type: String, unique: true },
-  email: { type: String, unique: true },
-  password: { type: String, },
-  resetPasswordToken: String,
-  resetPasswordExpires: Date
-});
-
-userSchema.pre('save', function (next) {
-  var user = this;
-  var SALT_FACTOR = 5;
-
-  if (!user.isModified('password')) return next();
-
-  bcrypt.genSalt(SALT_FACTOR, function (err, salt) {
-    if (err) return next(err);
-
-    bcrypt.hash(user.password, salt, null, function (err, hash) {
-      if (err) return next(err);
-      user.password = hash;
-      next();
-    });
-  });
-});
-
-userSchema.methods.comparePassword = function (candidatePassword, cb) {
-  bcrypt.compare(candidatePassword, this.password, function (err, isMatch) {
-    if (err) return cb(err);
-    cb(null, isMatch);
-  });
-};
-
-var User = mongoose.model('authenticates', userSchema);
-
-
     // Connecting To Mongo (mLab)
 
 mongoose.connect('mongodb://hxnain619:hxn6190@ds125502.mlab.com:25502/server-mongodb', { useNewUrlParser: true }, (err, data) => {
-  if (err) throw err;
-  console.log("Connected!!");
+  if (err) {
+    console.log(err.message);
+  } else{
+  console.log("Connected To Mongo!!");
+  }
 });
 
 var app = express();
@@ -103,7 +69,6 @@ app.use(flash());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ************ Routes  *****************
-
           // Home Page
 
 app.get('/', function (req, res) {
@@ -117,6 +82,7 @@ app.get('/', function (req, res) {
 
 app.get('/login', function (req, res) {
   res.render('login', {
+    title: 'Express',
     user: req.user
   });
 });
@@ -127,10 +93,15 @@ app.post('/login', function (req, res, next) {
   passport.authenticate('local', function (err, user, info) {
     if (err) return next(err)
     if (!user) {
+      req.flash('error',`User Not Found With Name , ${req.body.username}`);
       return res.redirect('/login')
     }
     req.logIn(user, function (err) {
-      if (err) return next(err);
+      if (err) {
+        req.flash('error', "Can't Log In")
+        return next(err);
+       }
+      req.flash('success', "You are Logged In !!");
       return res.redirect('/');
     });
   })(req, res, next);
@@ -140,6 +111,7 @@ app.post('/login', function (req, res, next) {
 
 app.get('/signup', function (req, res) {
   res.render('signup', {
+    title: 'Express',
     user: req.user
   });
 });
@@ -155,6 +127,7 @@ app.post('/signup', function (req, res) {
 
   user.save(function (err) {
     req.logIn(user, function (err) {
+      req.flash('success', `Hi!!,  ${(user.username).toUpperCase()} you have successfully created your UpUpManga Account`);
       res.redirect('/');
     });
   });
@@ -164,6 +137,7 @@ app.post('/signup', function (req, res) {
 
 app.get('/logout', function (req, res) {
   req.logout();
+  req.flash('info','You are logged out Successfully!!');
   res.redirect('/');
 });
 
@@ -171,6 +145,7 @@ app.get('/logout', function (req, res) {
 
 app.get('/forgot', function (req, res) {
   res.render('forgot', {
+    title: 'Express',
     user: req.user
   });
 });
@@ -206,8 +181,8 @@ app.post('/forgot', function (req, res, next) {
         requireTLS: true,
         auth: {
           // Add Your Credentials
-            user: 'Your Email',
-            pass: 'Your Pass'
+            user: 'hxan619@gmail.com',
+            pass: 'Reymysterio^!(0'
         },
         tls: {
               rejectUnauthorized: false
@@ -217,9 +192,9 @@ app.post('/forgot', function (req, res, next) {
         to: user.email,
         //  Change from mail to yours 
         from: 'hxan619@gmail.com',
-        subject: 'Node.js Password Reset',
+        subject: 'UpUpManga Password Reset',
         text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
-          'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
+          'Please click on the following link to complete the process:\n\n' +
           'http://' + req.headers.host + '/reset/' + token + '\n\n' +
           'If you did not request this, please ignore this email and your password will remain unchanged.\n'
       };
@@ -243,6 +218,7 @@ app.get('/reset/:token', function (req, res) {
       return res.redirect('/forgot');
     }
     res.render('reset', {
+      title: 'Express',
       user: req.user
     });
   });
@@ -278,8 +254,8 @@ app.post('/reset/:token', function (req, res) {
         requireTLS: true,
         auth: {
           // Add Your Credentials
-            user: 'Your EMail',
-            pass: 'Your Pass'
+            user: 'hxan619@gmail.com',
+            pass: 'Reymysterio^!(0'
         },
         tls: {
               rejectUnauthorized: false
@@ -291,7 +267,7 @@ app.post('/reset/:token', function (req, res) {
         from: 'hxan619@gmail.com',
         subject: 'Your password has been changed',
         text: 'Hello,\n\n' +
-          'This is a confirmation that the password for your account ' + user.email + ' has just been changed.\n'
+          'This is a confirmation message that the password for your UpUpManga account ' + user.email + ' has just been changed.\n'
       };
       transport.sendMail(mailOptions, function (err) {
         req.flash('success', 'Success! Your password has been changed.');
